@@ -1,72 +1,45 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  password: string;
-}
+import { UsersRepository } from './users.repository';
 
 @Injectable()
 export class UsersService {
-  private users: User[] = [];
-  private nextId = 1;
+  constructor(private readonly repo: UsersRepository) {}
 
-  create(createUserDto: CreateUserDto) {
-    const newUser = {
-      id: this.nextId++,
-      ...createUserDto,
-    };
-
-    this.users.push(newUser);
+  create(dto: CreateUserDto) {
+    const user = this.repo.create(dto);
     return {
       message: 'Usuário criado com sucesso!',
-      user: newUser,
+      user,
     };
   }
 
   findAll() {
-    return this.users;
+    return this.repo.findAll();
   }
 
   findOne(id: number) {
-    const user = this.users.find((u) => u.id === id);
-    if (!user) {
-      throw new NotFoundException(`Usuário com id ${id} não encontrado`);
-    }
+    const user = this.repo.findOne(id);
+    if (!user) throw new NotFoundException(`Usuário ${id} não encontrado`);
     return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    const index = this.users.findIndex((u) => u.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Usuário com id ${id} não encontrado`);
-    }
-
-    this.users[index] = {
-      ...this.users[index],
-      ...updateUserDto,
-    };
-
+  update(id: number, dto: UpdateUserDto) {
+    const user = this.repo.update(id, dto);
+    if (!user) throw new NotFoundException(`Usuário ${id} não encontrado`);
     return {
-      message: 'Usuário atualizado com sucesso!',
-      user: this.users[index],
+      message: 'Usuário atualizado!',
+      user,
     };
   }
 
   remove(id: number) {
-    const index = this.users.findIndex((u) => u.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Usuário com id ${id} não encontrado`);
-    }
-
-    const removedUser = this.users.splice(index, 1)[0];
-
+    const user = this.repo.remove(id);
+    if (!user) throw new NotFoundException(`Usuário ${id} não encontrado`);
     return {
-      message: 'Usuário removido com sucesso!',
-      user: removedUser,
+      message: 'Usuário deletado!',
+      user,
     };
   }
 }
